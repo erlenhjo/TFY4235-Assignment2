@@ -6,12 +6,11 @@
 # """
 import matplotlib.pyplot as plt
 import numpy as np
+import scipy
 
 import potential
-import rng as RNG
 import euler
 import units
-import scipy
 
 
 ###### Global constants ######
@@ -34,7 +33,6 @@ def potential_test():
     
 def probability_test():
     global alpha, kbT
-    U_hat=np.linspace(0,1,1000)
 
     fig,ax=plt.subplots()
     deltaU=0.1*kbT
@@ -50,8 +48,11 @@ def probability_test():
 
 def rng_test():
     seed=0
-    RNG.test_generator(seed)
-
+    gen=np.random.Generator(np.random.MT19937(seed))
+    vals=gen.normal(size=100000)
+    plt.hist(vals, bins=1000)
+    print(f"Mean: {np.mean(vals)}")
+    print(f"Std: {np.std(vals)}")
 
 def euler_test():
     global r_1, eV, L, alpha, eta, kbT
@@ -80,7 +81,7 @@ def euler_test():
     
     flashing=False
     rng_seed=0
-    particle_count=100
+    particle_count=1000
     N=1000000
     
     x_vals=euler.execute_euler_scheme(particle_count,dt_hat,tau,alpha,omega,D_hat,N,rng_seed,flashing)
