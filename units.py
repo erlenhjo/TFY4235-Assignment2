@@ -6,6 +6,16 @@ Created on Wed Mar  9 13:29:48 2022
 """
 import numpy as np
 
+###### Global constants ######
+r_1=12e-9     #m
+eV=1.602e-19
+L=20e-6     #m   
+alpha=0.2   #unitless
+eta=1e-3    #Pa*s
+kbT=26e-3*eV   #J
+########################
+
+
 def gamma(eta,r):
     return 6*np.pi*eta*r
 

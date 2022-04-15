@@ -11,15 +11,15 @@ import scipy
 import potential
 import euler
 import units
-
+from units import r_1, eV, L, alpha, eta, kbT
 
 ###### Global constants ######
-r_1=12e-9     #m
-eV=1.602e-19
-L=20e-6     #m   
-alpha=0.2   #unitless
-eta=1e-3    #Pa*s
-kbT=26e-3*eV   #J
+# r_1=12e-9     #m
+# eV=1.602e-19
+# L=20e-6     #m   
+# alpha=0.2   #unitless
+# eta=1e-3    #Pa*s
+# kbT=26e-3*eV   #J
 ########################
 
 
@@ -81,7 +81,7 @@ def euler_test():
     
     flashing=False
     rng_seed=0
-    particle_count=1000
+    particle_count=100
     N=1000000
     
     x_vals=euler.execute_euler_scheme(particle_count,dt_hat,tau,alpha,omega,D_hat,N,rng_seed,flashing)
