@@ -33,14 +33,11 @@ def iterate_euler(particle_count,dt_hat,tau,alpha,omega,D_hat,N,flashing,epsilon
             t_hat_n=t_hat_n+dt_hat
     else:
         for n in range(N-1):
-            x_vals[n+1]=euler_increment_constant(x_vals[n], dt_hat, alpha, D_hat, epsilons[n])
-            t_hat_n=t_hat_n+dt_hat
-            
+            x_vals[n+1]=euler_increment_constant(x_vals[n], dt_hat, alpha, D_hat, epsilons[n])            
     return x_vals
-    
 
 def execute_euler_scheme(particle_count,dt_hat,tau,alpha,omega,D_hat,N,rng_seed,flashing):
-    rng=np.random.Generator(np.random.MT19937(rng_seed))
+    rng=np.random.Generator(np.random.PCG64(np.random.SeedSequence(rng_seed)))
     epsilons=rng.normal(size=(N,particle_count))
     x_vals=iterate_euler(particle_count, dt_hat, tau, alpha, omega, D_hat, N, flashing, epsilons) 
     return x_vals
