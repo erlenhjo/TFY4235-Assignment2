@@ -12,6 +12,8 @@ import potential
 import euler
 import units
 from units import r_1, eV, L, alpha, eta, kbT
+import dataGeneration
+import dataPresentation
 
 ###### Global constants ######
 # r_1=12e-9     #m
@@ -22,7 +24,8 @@ from units import r_1, eV, L, alpha, eta, kbT
 # kbT=26e-3*eV   #J
 ########################
 
-
+#plots potential and force for visual confirmation that the implementation is
+#correct
 def potential_test():
     global alpha   
     x_hat=np.linspace(-2,2,1000)
@@ -54,47 +57,21 @@ def rng_test():
     print(f"Mean: {np.mean(vals)}")
     print(f"Std: {np.std(vals)}")
 
-def euler_test():
+def data_generation_test():
     global r_1, eV, L, alpha, eta, kbT
     
-    r=r_1
-    tau=1
-    #deltaU=80*eV
-    #deltaU=0.1*kbT
-    #deltaU=kbT
-    deltaU=10*kbT
+    radius_name="r_1"
+    N=int(1e6)
+    particle_count=int(1e1)
     
-    gamma=units.gamma(eta, r)
-    omega=units.omega(deltaU, gamma, L)
-    D_hat=units.D_hat(kbT, deltaU)
+    dataGeneration.generate_particle_tracks(radius_name, N, particle_count, deltaU=kbT, tau=1, flashing=False)
+    dataGeneration.generate_particle_tracks(radius_name, N, particle_count, deltaU=80*eV, tau=1, flashing=True)
     
-    dt=units.dt(gamma, kbT, alpha, L, deltaU)
-    dt_hat=units.dt_hat(dt, omega)
+    print(dataGeneration.get_available_seeds(radius_name, N, deltaU=kbT, tau=1, flashing=False))
+    print(dataGeneration.get_available_seeds(radius_name, N, deltaU=80*eV, tau=1, flashing=True))
     
-    print(gamma)
-    print(omega)
-    print(D_hat)
-    print(dt)
-    print(dt_hat)
-    
-    print(units.dt_hat_2(alpha,D_hat))
-    
-    flashing=False
-    rng_seed=0
-    particle_count=100
-    N=1000000
-    
-    x_vals=euler.execute_euler_scheme(particle_count,dt_hat,tau,alpha,omega,D_hat,N,rng_seed,flashing)
-    
-    
-    #euler.plot_trajectories(x_vals,dt_hat,flashing)
-    
-    x_hat=np.linspace(x_vals.min(),x_vals.max(),1000)
-    
-    fig,ax=plt.subplots()
-    
-    potential.plot_potential(x_hat, alpha, ax)
-    ax.hist(x_vals[N-1,:],bins=100,density=True)
+    """
+    euler.plot_trajectories(x_vals,dt_hat,flashing)
     
     fig,ax=plt.subplots()
     U_vals=potential.constant_ratchet_potential(x_vals.flatten(), alpha)
@@ -103,11 +80,9 @@ def euler_test():
     bin_centers = 0.5*(bin_edges[1:]+bin_edges[:-1])
     ax.plot(bin_centers,p_hist,"x")
     potential.plot_probability_density(alpha, deltaU, kbT, ax)
-    
+    """
     
 if __name__=="__main__":
     
-    #potential_test()
-    #probability_test()
-    euler_test()
+    data_generation_test()
     
