@@ -5,12 +5,8 @@ Created on Wed Mar  9 13:32:48 2022
 @author: Erlend Johansen
 """
 import numpy as np
-import matplotlib.pyplot as plt
-from numba import vectorize, njit
-import time
+from numba import vectorize
 from scipy import integrate
-
-import A2tests
 
 @vectorize(cache=True)
 def flashing_ratchet_potential(x_hat,t_hat,tau,alpha,omega):
@@ -59,26 +55,26 @@ def constant_ratchet_force(x_hat,alpha):
 
     
 
-def plot_potential_and_force(x_hat, alpha, ax):
+def ax_plot_potential_and_force(x_hat, alpha, ax):
     U=constant_ratchet_potential(x_hat,alpha)
     F=constant_ratchet_force(x_hat, alpha)
 
     ax.plot(x_hat,U,label="Potential")
     ax.plot(x_hat,F,label="Force")
     
-def plot_potential(x_hat, alpha, ax):
+def ax_plot_potential(x_hat, alpha, ax):
     U=constant_ratchet_potential(x_hat,alpha)
     
     ax.plot(x_hat,U,label="Potential")
     
 
-@njit(cache=True)    
+@vectorize(cache=True)    
 def probability_density(U, alpha, deltaU, kbT):
     a=np.exp(-U/kbT)
     b=(1-np.exp(-deltaU/kbT))
     return a/(kbT*b)
     
-def plot_probability_density(alpha, deltaU, kbT, ax):
+def ax_plot_probability_density(alpha, deltaU, kbT, ax):
     p=lambda U : probability_density(U, alpha, deltaU, kbT)
     
     U=np.linspace(0,deltaU,10000)
@@ -87,9 +83,5 @@ def plot_probability_density(alpha, deltaU, kbT, ax):
         
     total_probability,_=integrate.quad(p,0,deltaU)
     print(f"The total probability at deltaU={deltaU/kbT}kbT differs from 1 by {abs(total_probability-1):.1e}")
-    
-    
-if __name__=="__main__":
-    A2tests.probability_test()
     
     
