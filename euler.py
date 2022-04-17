@@ -5,12 +5,9 @@ Created on Wed Mar  9 16:03:36 2022
 @author: Erlend Johansen
 """
 import numpy as np
-from numba import vectorize,njit
-import matplotlib.pyplot as plt
-from tqdm import tqdm
+from numba import njit
 
 import potential
-import A2tests
 
 @njit(cache=True)
 def euler_increment_flashing(x_hat,t_hat,dt_hat,tau,alpha,omega,D_hat,epsilon):
@@ -43,24 +40,8 @@ def execute_euler_scheme(particle_count,dt_hat,tau,alpha,omega,D_hat,N,rng_seed,
     return x_vals
 
 
-def plot_trajectories(x_vals,dt_hat,flashing):
-    N=np.shape(x_vals)[0]
-    particle_count=np.shape(x_vals)[1]
-    t=np.array(range(N))*dt_hat
-    
-    fig,ax=plt.subplots()
-    for i in range(particle_count):
-        plt.plot(x_vals[:,i],t)
-    
-    if flashing:
-        for i in range(int(np.ceil(N*dt_hat))):
-            plt.axhline(y = i+0.75, color = 'r', linestyle = '--')
-            plt.axhline(y = i+1, color = 'r', linestyle = '--')
              
     
-
-if __name__=="__main__":
-    A2tests.euler_test()
 
     
     
