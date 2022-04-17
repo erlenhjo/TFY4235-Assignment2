@@ -24,8 +24,8 @@ import dataPresentation
 # kbT=26e-3*eV   #J
 ########################
 
-#plots potential and force for visual confirmation that the implementation is
-#correct
+#plots potential and force for visual confirmation that the implementation\\
+    #is correct
 def potential_test():
     global alpha   
     x_hat=np.linspace(-2,2,1000)
@@ -50,9 +50,9 @@ def probability_test():
     potential.plot_probability_density(alpha, deltaU, kbT, ax)  
 
 def rng_test():
-    seed=0
-    gen=np.random.Generator(np.random.MT19937(seed))
-    vals=gen.normal(size=100000)
+    seed=np.random.SeedSequence()
+    gen=np.random.Generator(np.random.PCG64(seed))
+    vals=gen.normal(size=1000000)
     plt.hist(vals, bins=1000)
     print(f"Mean: {np.mean(vals)}")
     print(f"Std: {np.std(vals)}")
