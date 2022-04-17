@@ -18,20 +18,20 @@ import units
 #     N
 #     deltaU
 #     seed
-#         x_hat_vals.npy
+#         trajectories.npy
 #         metadata.pickle
 # flashing potential
 #     radius
 #     N
 #     tau
 #     seed
-#         x_hat_vals.npy
+#         trajectories.npy
 #         metadata.npy 
 # zero potential
 #     radius
 #     N
 #     seed
-#         x_vals.npy
+#         trajectories.npy
 #         metadata.npy
 
 # seed is used as indentifier, so that identical seeds overwrite eachother and are \\
@@ -47,24 +47,35 @@ def create_folder(path):
         os.makedirs(path)
     except OSError as err: 
         print(err)
-        
+
+
+
+####### Flashing and non-zero constant potential #######
+
+#returns relative path to data storage folder for constant potential \\
+    #at a given r, N and deltaU
 def folder_path_constant(radius_name,deltaU,N):
     deltaU_per_kbT=deltaU/kbT
     folder_path=os.path.join("raw_data","constant_potential",radius_name,f"N_{N}",f"deltaU_{deltaU_per_kbT:.2f}kbT")
     return folder_path
-    
+
+#returns relative path to data storage folder for flashing potential \\
+    #at a given r, N and tau   
 def folder_path_flashing(radius_name,tau,N):
     folder_path=os.path.join("raw_data","flashing_potential",radius_name,f"N_{N}",f"tau_{tau}")
     return folder_path
-        
+
+
+#runs a single experiment in a flashing or constant potential and saves the data to file \\
+    #given the parameters r, N, number of particles in parallel, deltaU and tau
 def generate_particle_tracks(radius_name, N, particle_count, deltaU, tau, flashing):
     global r_1, L, alpha, eta, kbT
     
+    #calculation of relevant reduced unit parameters
     if radius_name=="r_1":
         r=r_1
     elif radius_name=="r_2":
         r=3*r_1
-    
     gamma=units.gamma(eta, r)
     omega=units.omega(deltaU, gamma, L)
     D_hat=units.D_hat(kbT, deltaU)    
@@ -108,6 +119,9 @@ def generate_particle_tracks(radius_name, N, particle_count, deltaU, tau, flashi
     np.save(metadata_path, metadata)
 
 
+
+#gets a list of seeds and their particle counts for \\
+    #trajectory data sets given r, N, deltaU, tau and potential type
 def get_available_seeds(radius_name, N, deltaU, tau, flashing):
     #set outer folder path
     if flashing:
@@ -130,5 +144,47 @@ def get_available_seeds(radius_name, N, deltaU, tau, flashing):
         
     return seeds, particle_counts
 
+
+
+#function to get the metadata from a spesific experiment
+def get_metadata(radius_name, N, deltaU, tau, flashing, seed):
+    #set outer folder path
+    if flashing:
+        folder_path=folder_path_flashing(radius_name, tau, N)
+    else:
+        folder_path=folder_path_constant(radius_name, deltaU, N)
     
+    #set path to metadata file
+    metadata_path=os.path.join(folder_path,seed,"metadata.npy")
+    #load metadata dict from file
+    metadata=np.load(metadata_path, allow_pickle=True).item()
+    
+    return metadata
+    
+#function to get the trajectories from a spesific experiment    
+def get_trajectories(radius_name, N, deltaU, tau, flashing, seed):
+    #set outer folder path
+    if flashing:
+        folder_path=folder_path_flashing(radius_name, tau, N)
+    else:
+        folder_path=folder_path_constant(radius_name, deltaU, N)
+    
+    #set path to trajectories file
+    trajectories_path=os.path.join(folder_path,seed,"trajectories.npy")
+
+    #load trajectories ndarray from file
+    trajectories=np.load(trajectories_path)
+    
+    return trajectories
+########################################################
+
+###### Zero potential ######
+
+
+
+
+
+
+
+############################
     
