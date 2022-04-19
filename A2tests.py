@@ -15,24 +15,6 @@ from units import r_1, eV, L, alpha, eta, kbT
 import dataGeneration
 import dataPresentation
 
-###### Global constants ######
-# r_1=12e-9     #m
-# eV=1.602e-19
-# L=20e-6     #m   
-# alpha=0.2   #unitless
-# eta=1e-3    #Pa*s
-# kbT=26e-3*eV   #J
-########################
-
-#plots potential and force for visual confirmation that the implementation\\
-    #is correct
-def potential_test():
-    global alpha   
-    x_hat=np.linspace(-2,2,1000)
-    
-    fig,ax=plt.subplots()
-    potential.plot_potential_and_force(x_hat, alpha, ax)
-    
     
 def probability_test():
     global alpha, kbT
