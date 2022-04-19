@@ -21,17 +21,17 @@
 ### Data storage routines
 - [x] Determine folder structure
 - [x] Store trajectories
-- [ ] Store end points
+- [x] Store end points
 - [x] Store metadata 
 - [x] Access trajectories
-- [ ] Access end points
+- [x] Access end points
 - [x] Access metadata
 
 ### Particle simulations - Constant potential
-- [ ] Run with constant potential for different deltaU
-	- [ ] Determine N and number of particles in parallell	
+- [x] Run with constant potential for different deltaU
+	- [ ] Determine t_max and number of particles in parallell	
 - [ ] Compare position distribution with Boltzmann distribution
-	- [ ] Plot of trajectories
+	- [ ] Plot of particle tracks
 	- [ ] Occupied/visited? potential energy vs Boltzmann
 - [x] Check that Boltzmann distribution is well normalized
 - [ ] Determine deltaU for drift to the right with flashing

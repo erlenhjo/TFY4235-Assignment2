@@ -9,29 +9,28 @@ import os
 import numpy as np
 
 import euler
-from units import r_1, eV, L, alpha, eta, kbT
-import units
+from units import kbT
 
 #### Raw data folder structure####
 # constant potential
 #     radius
-#     N
+#     t_max
 #     deltaU
 #     seed
-#         trajectories.npy
+#         tracks.npy
 #         metadata.pickle
 # flashing potential
 #     radius
-#     N
+#     t_max
 #     tau
 #     seed
-#         trajectories.npy
+#         tracks.npy
 #         metadata.npy 
 # zero potential
 #     radius
-#     N
+#     t_max
 #     seed
-#         trajectories.npy
+#         tracks.npy
 #         metadata.npy
 
 # seed is used as indentifier, so that identical seeds overwrite eachother and are \\
@@ -54,75 +53,72 @@ def create_folder(path):
 
 #returns relative path to data storage folder for constant potential \\
     #at a given r, N and deltaU
-def folder_path_constant(radius_name,deltaU,N):
+def folder_path_constant(radius_name, t_max, deltaU):
+    global kbT
     deltaU_per_kbT=deltaU/kbT
-    folder_path=os.path.join("raw_data","constant_potential",radius_name,f"N_{N}",f"deltaU_{deltaU_per_kbT:.2f}kbT")
+    folder_path=os.path.join("raw_data","constant_potential",radius_name,f"t_max_{t_max}",f"deltaU_{deltaU_per_kbT:.2f}kbT")
     return folder_path
 
 #returns relative path to data storage folder for flashing potential \\
     #at a given r, N and tau   
-def folder_path_flashing(radius_name,tau,N):
-    folder_path=os.path.join("raw_data","flashing_potential",radius_name,f"N_{N}",f"tau_{tau}")
+def folder_path_flashing(radius_name, t_max, tau):
+    folder_path=os.path.join("raw_data","flashing_potential",radius_name,f"t_max_{t_max}",f"tau_{tau}")
     return folder_path
 
 
 #runs a single experiment in a flashing or constant potential and saves the data to file \\
     #given the parameters r, N, number of particles in parallel, deltaU and tau
-def generate_particle_tracks(radius_name, N, particle_count, deltaU, tau, flashing):
-    global r_1, L, alpha, eta, kbT
+def generate_particle_tracks(parameters, particle_count, flashing):    
+    #get relevant parameters for euler scheme
+    dt_hat=parameters["dt_hat"]
+    tau=parameters["tau"]
+    alpha=parameters["alpha"]
+    omega=parameters["omega"]
+    D_hat=parameters["D_hat"]
+    N=parameters["N"]
     
-    #calculation of relevant reduced unit parameters
-    if radius_name=="r_1":
-        r=r_1
-    elif radius_name=="r_2":
-        r=3*r_1
-    gamma=units.gamma(eta, r)
-    omega=units.omega(deltaU, gamma, L)
-    D_hat=units.D_hat(kbT, deltaU)    
-    dt=units.dt(gamma, kbT, alpha, L, deltaU)
-    dt_hat=units.dt_hat(dt, omega)
+    #get additional parameters for data storage
+    radius_name=parameters["radius_name"] 
+    deltaU=parameters["deltaU"]
+    t_max=parameters["t_max"]
+    
     
     #aquiring a suitable seed for the PRNG from computer entropy
     rng_seed=np.random.SeedSequence().entropy  
 
     #calculating the x positions of the particles through the euler scheme    
-    trajectories=euler.execute_euler_scheme(particle_count,dt_hat,tau,alpha,omega,D_hat,N,rng_seed,flashing)
+    tracks=euler.execute_euler_scheme(particle_count,dt_hat,tau,alpha,omega,D_hat,N,rng_seed,flashing)
 
-    #create dict for metadata and add values
-    metadata={}
-    metadata["deltaU"]=deltaU
-    metadata["r"]=r
-    metadata["gamma"]=gamma
-    metadata["omega"]=omega
-    metadata["D_hat"]=D_hat
-    metadata["dt"]=dt
-    metadata["dt_hat"]=dt_hat
-    metadata["particle_count"]=particle_count
-    metadata["flashing"]=flashing
-    metadata["rng_seed"]=rng_seed
-    metadata["N"]=N
-    metadata["tau"]=tau
+    #extract endpoints
+    endpoints=tracks[-1]
     
     #set the path for the outer data folder
     if flashing:
-        folder_path=folder_path_flashing(radius_name, tau, N)
+        folder_path=folder_path_flashing(radius_name, tau, t_max)
     else:
-        folder_path=folder_path_constant(radius_name, deltaU, N)
+        folder_path=folder_path_constant(radius_name, deltaU, t_max)
     
     #create the seed folder and all missing intermediate folders
     create_folder(os.path.join(folder_path,str(rng_seed)))
     
-    #save x values and metadata to file
-    trajectories_path=os.path.join(folder_path, str(rng_seed), "trajectories.npy")
-    metadata_path=os.path.join(folder_path, str(rng_seed), "metadata.npy")
-    np.save(trajectories_path, trajectories)
-    np.save(metadata_path, metadata)
-
+    #save tracks, endpoints and particle_count to file
+    tracks_path=os.path.join(folder_path, str(rng_seed), "tracks.npy")
+    particle_count_path=os.path.join(folder_path, str(rng_seed), "particle_count.npy")
+    endpoints_path=os.path.join(folder_path, str(rng_seed), "endpoints.npy")
+    np.save(tracks_path, tracks)
+    np.save(particle_count_path, particle_count)
+    np.save(endpoints_path, endpoints)
 
 
 #gets a list of seeds and their particle counts for \\
-    #trajectory data sets given r, N, deltaU, tau and potential type
-def get_available_seeds(radius_name, N, deltaU, tau, flashing):
+    #track data sets given r, N, deltaU, tau and potential type
+def get_available_seeds(parameters, flashing):
+    #get relevant parameters
+    radius_name=parameters["radius_name"] 
+    N=parameters["N"]
+    deltaU=parameters["deltaU"]
+    tau=parameters["tau"]
+    
     #set outer folder path
     if flashing:
         folder_path=folder_path_flashing(radius_name, tau, N)
@@ -130,52 +126,69 @@ def get_available_seeds(radius_name, N, deltaU, tau, flashing):
         folder_path=folder_path_constant(radius_name, deltaU, N)
     
     #get seeds from folder names
-    seeds=os.listdir(folder_path)
+    try:
+        seeds=os.listdir(folder_path)
+    except:
+        seeds=[]
     
     #find particle count for all seeds
     particle_counts=[]
     for seed in seeds:
-        #set path to metadata file
-        metadata_path=os.path.join(folder_path,seed,"metadata.npy")
-        #load metadata dict from file
-        metadata=np.load(metadata_path, allow_pickle=True).item()
-        #extract particle count
-        particle_counts.append(metadata["particle_count"])
+        #set path to file
+        particle_count_path=os.path.join(folder_path,seed,"particle_count.npy")
+        #load particle count from file
+        particle_count=np.load(particle_count_path)
+        #append particle count
+        particle_counts.append(particle_count)
         
     return seeds, particle_counts
-
-
-
-#function to get the metadata from a spesific experiment
-def get_metadata(radius_name, N, deltaU, tau, flashing, seed):
+    
+#function to get the tracks from a spesific experiment    
+def get_tracks(parameters, flashing, seed):
+    #get relevant parameters
+    radius_name=parameters["radius_name"] 
+    N=parameters["N"]
+    deltaU=parameters["deltaU"]
+    tau=parameters["tau"]
+    
     #set outer folder path
     if flashing:
         folder_path=folder_path_flashing(radius_name, tau, N)
     else:
         folder_path=folder_path_constant(radius_name, deltaU, N)
     
-    #set path to metadata file
-    metadata_path=os.path.join(folder_path,seed,"metadata.npy")
-    #load metadata dict from file
-    metadata=np.load(metadata_path, allow_pickle=True).item()
+    #set path to tracks file
+    tracks_path=os.path.join(folder_path,seed,"tracks.npy")
+
+    #load tracks ndarray from file
+    tracks=np.load(tracks_path)
     
-    return metadata
+    return tracks
+
+#function to get the endpoints from a spesific experiment    
+def get_endpoints(parameters, flashing, seed):
+    #get relevant parameters
+    radius_name=parameters["radius_name"] 
+    N=parameters["N"]
+    deltaU=parameters["deltaU"]
+    tau=parameters["tau"]
     
-#function to get the trajectories from a spesific experiment    
-def get_trajectories(radius_name, N, deltaU, tau, flashing, seed):
     #set outer folder path
     if flashing:
         folder_path=folder_path_flashing(radius_name, tau, N)
     else:
         folder_path=folder_path_constant(radius_name, deltaU, N)
     
-    #set path to trajectories file
-    trajectories_path=os.path.join(folder_path,seed,"trajectories.npy")
+    #set path to endpoints file
+    endpoints_path=os.path.join(folder_path, seed, "endpoints.npy")
 
-    #load trajectories ndarray from file
-    trajectories=np.load(trajectories_path)
+    #load endpoints array from file
+    endpoints=np.load(endpoints_path)
     
-    return trajectories
+    return endpoints
+
+
+
 ########################################################
 
 ###### Zero potential ######
