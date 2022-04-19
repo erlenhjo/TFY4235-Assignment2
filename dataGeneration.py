@@ -56,13 +56,13 @@ def create_folder(path):
 def folder_path_constant(radius_name, t_max, deltaU):
     global kbT
     deltaU_per_kbT=deltaU/kbT
-    folder_path=os.path.join("raw_data","constant_potential",radius_name,f"t_max_{t_max}",f"deltaU_{deltaU_per_kbT:.2f}kbT")
+    folder_path=os.path.join("raw_data","constant_potential",radius_name,f"t_max_{t_max:.2e}",f"deltaU_{deltaU_per_kbT:.2f}kbT")
     return folder_path
 
 #returns relative path to data storage folder for flashing potential \\
     #at a given r, N and tau   
 def folder_path_flashing(radius_name, t_max, tau):
-    folder_path=os.path.join("raw_data","flashing_potential",radius_name,f"t_max_{t_max}",f"tau_{tau}")
+    folder_path=os.path.join("raw_data","flashing_potential",radius_name,f"t_max_{t_max:.2e}",f"tau_{tau:.2e}")
     return folder_path
 
 
@@ -94,9 +94,9 @@ def generate_particle_tracks(parameters, particle_count, flashing):
     
     #set the path for the outer data folder
     if flashing:
-        folder_path=folder_path_flashing(radius_name, tau, t_max)
+        folder_path=folder_path_flashing(radius_name, t_max, tau)
     else:
-        folder_path=folder_path_constant(radius_name, deltaU, t_max)
+        folder_path=folder_path_constant(radius_name, t_max, deltaU)
     
     #create the seed folder and all missing intermediate folders
     create_folder(os.path.join(folder_path,str(rng_seed)))
@@ -115,15 +115,15 @@ def generate_particle_tracks(parameters, particle_count, flashing):
 def get_available_seeds(parameters, flashing):
     #get relevant parameters
     radius_name=parameters["radius_name"] 
-    N=parameters["N"]
+    t_max=parameters["t_max"]
     deltaU=parameters["deltaU"]
     tau=parameters["tau"]
     
     #set outer folder path
     if flashing:
-        folder_path=folder_path_flashing(radius_name, tau, N)
+        folder_path=folder_path_flashing(radius_name, t_max, tau)
     else:
-        folder_path=folder_path_constant(radius_name, deltaU, N)
+        folder_path=folder_path_constant(radius_name, t_max, deltaU)
     
     #get seeds from folder names
     try:
@@ -136,56 +136,56 @@ def get_available_seeds(parameters, flashing):
     for seed in seeds:
         #set path to file
         particle_count_path=os.path.join(folder_path,seed,"particle_count.npy")
-        #load particle count from file
+        #load particle count from file, as a 1x1 array
         particle_count=np.load(particle_count_path)
         #append particle count
         particle_counts.append(particle_count)
         
     return seeds, particle_counts
     
-#function to get the tracks from a spesific experiment    
-def get_tracks(parameters, flashing, seed):
+#function to get the tracks or endpoints from a spesific experiment    
+def get_data(parameters, flashing, desired_particle_count, data_type):
     #get relevant parameters
     radius_name=parameters["radius_name"] 
-    N=parameters["N"]
+    t_max=parameters["t_max"]
     deltaU=parameters["deltaU"]
     tau=parameters["tau"]
     
     #set outer folder path
     if flashing:
-        folder_path=folder_path_flashing(radius_name, tau, N)
+        folder_path=folder_path_flashing(radius_name, t_max, tau)
     else:
-        folder_path=folder_path_constant(radius_name, deltaU, N)
+        folder_path=folder_path_constant(radius_name, t_max, deltaU)
     
-    #set path to tracks file
-    tracks_path=os.path.join(folder_path,seed,"tracks.npy")
-
-    #load tracks ndarray from file
-    tracks=np.load(tracks_path)
+    seeds, particle_counts=get_available_seeds(parameters, flashing)
     
-    return tracks
-
-#function to get the endpoints from a spesific experiment    
-def get_endpoints(parameters, flashing, seed):
-    #get relevant parameters
-    radius_name=parameters["radius_name"] 
-    N=parameters["N"]
-    deltaU=parameters["deltaU"]
-    tau=parameters["tau"]
-    
-    #set outer folder path
-    if flashing:
-        folder_path=folder_path_flashing(radius_name, tau, N)
+    if data_type=="tracks" or data_type=="endpoints":
+        missing_particles=desired_particle_count
+        for i,(seed, particle_count) in enumerate(zip(seeds, particle_counts)):
+            desired_indices=min(particle_count,missing_particles)
+            #set path to file
+            data_path=os.path.join(folder_path,seed,f"{data_type}.npy")
+            #load from file and return data from as many particles as desired
+            if data_type=="tracks":
+                if i==0:
+                    desired_data=np.load(data_path)[:,:desired_indices]
+                else:
+                    desired_data.append(np.load(data_path)[:,:desired_indices], axis=1)
+            elif data_type=="endpoints":
+                if i==0:
+                    desired_data=np.load(data_path)[:desired_indices]
+                else:
+                    desired_data.append(np.load(data_path)[:desired_indices])
+            missing_particles-=desired_indices
+            #break when data from enough particles is aquired
+            if not missing_particles:
+                break
     else:
-        folder_path=folder_path_constant(radius_name, deltaU, N)
-    
-    #set path to endpoints file
-    endpoints_path=os.path.join(folder_path, seed, "endpoints.npy")
+        raise("Error: Not valid datatype")
+        
+    return desired_data
 
-    #load endpoints array from file
-    endpoints=np.load(endpoints_path)
-    
-    return endpoints
+
 
 
 
