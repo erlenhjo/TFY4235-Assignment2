@@ -41,7 +41,7 @@ def calculate_dt(gamma,kbT,alpha,L,deltaU):
     
     sqrt_dt_max=(-b+np.sqrt(b**2-4*a*c))/(2*a)   #positive solution
 
-    return sqrt_dt_max**2*0.01
+    return sqrt_dt_max**2*0.1
     
 def dt_hat(dt, omega):
     return dt*omega
@@ -49,14 +49,14 @@ def dt_hat(dt, omega):
 def dt(dt_hat, omega):
     return dt_hat/omega
 
-def dt_hat_2(alpha,D_hat):
+def calculate_dt_hat(alpha,D_hat):
     a=1/alpha
     b=4*np.sqrt(2*D_hat)
     c=-alpha
     
     sqrt_dt_max=(-b+np.sqrt(b**2-4*a*c))/(2*a)   #positive solution
 
-    return sqrt_dt_max**2*0.01
+    return sqrt_dt_max**2*0.1
 
 def N(t_max, omega):
     return int(np.ceil(t_max/omega))
