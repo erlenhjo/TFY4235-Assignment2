@@ -37,7 +37,7 @@ def execute_euler_scheme(particle_count,dt_hat,tau,alpha,omega,D_hat,N,rng_seed,
     rng=np.random.Generator(np.random.PCG64(np.random.SeedSequence(rng_seed)))
     epsilons=rng.normal(size=(N,particle_count))
     x_vals=iterate_euler(particle_count, dt_hat, tau, alpha, omega, D_hat, N, flashing, epsilons) 
-    return x_vals
+    return x_vals  #returns x_vals in reduced units
 
 
              

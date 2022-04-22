@@ -29,22 +29,22 @@
 
 ### Particle simulations - Constant potential
 - [x] Run with constant potential for different deltaU
-	- [ ] Determine t_max and number of particles in parallell	
-- [ ] Compare position distribution with Boltzmann distribution
-	- [ ] Plot of particle tracks
-	- [ ] Occupied/visited? potential energy vs Boltzmann
+	- [x] Determine t_max and number of particles in parallell	
+- [x] Compare position distribution with Boltzmann distribution
+	- [x] Plot of particle tracks
+	- [x] Occupied/visited? potential energy vs Boltzmann
 - [x] Check that Boltzmann distribution is well normalized
-- [ ] Determine deltaU for drift to the right with flashing
-- [ ] Predict 3 regimes of drift efficiency
+- [x] Determine deltaU for drift to the right with flashing
+- [ ] Predict 3 regimes of drift efficiency with respect to tau
 
 ### Particle simulations - Flashing potential
-- [ ] Run with 80 eV flashing potential for different tau
-	- [ ] Determine tau values
-	- [ ] Determine N and number of particles in parallell
-- [ ] Plot trajectries for different tau
-	- [ ] One for each drift efficiency regime
-- [ ] Calculate average drift velocity as function of tau
-- [ ] Estimate optimal tau for max drift velocity
+- [x] Run with 80 eV flashing potential for different tau
+	- [x] Determine tau values
+	- [x] Determine t_max
+- [x] Plot trajectries for different tau
+	- [x] One for each drift efficiency regime
+- [x] Calculate average drift velocity as function of tau
+- [x] Estimate optimal tau for max drift velocity
 - [ ] Compare with literature
 - [ ] Compare with larger particle
 	- [ ] Show that it is equivalent to a change of timescale in reduced units
