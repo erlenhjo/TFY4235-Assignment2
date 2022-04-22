@@ -6,7 +6,9 @@ Created on Thu Apr 14 22:42:44 2022
 """
 
 import os
+import sys
 import numpy as np
+from time import time
 
 import euler
 from units import kbT
@@ -43,7 +45,7 @@ from units import kbT
 #If the for instance the folder already exists, the error is printed rather than raised
 def create_folder(path):
     try:
-        os.makedirs(path)
+        os.makedirs(path,exist_ok=True)
     except OSError as err: 
         print(err)
 
@@ -68,7 +70,7 @@ def folder_path_flashing(radius_name, t_max, tau):
 
 #runs a single experiment in a flashing or constant potential and saves the data to file \\
     #given the parameters r, N, number of particles in parallel, deltaU and tau
-def generate_particle_tracks(parameters, particle_count, flashing):    
+def generate_particle_tracks(parameters, particle_count, flashing, save_tracks):    
     #get relevant parameters for euler scheme
     dt_hat=parameters["dt_hat"]
     tau=parameters["tau"]
@@ -82,13 +84,13 @@ def generate_particle_tracks(parameters, particle_count, flashing):
     deltaU=parameters["deltaU"]
     t_max=parameters["t_max"]
     
-    
     #aquiring a suitable seed for the PRNG from computer entropy
     rng_seed=np.random.SeedSequence().entropy  
-
+    tic=time()
     #calculating the x positions of the particles through the euler scheme    
     tracks=euler.execute_euler_scheme(particle_count,dt_hat,tau,alpha,omega,D_hat,N,rng_seed,flashing)
-
+    toc=time()
+    print(f"Euler: particles={particle_count}, time={toc-tic}")
     #extract endpoints
     endpoints=tracks[-1]
     
@@ -98,21 +100,33 @@ def generate_particle_tracks(parameters, particle_count, flashing):
     else:
         folder_path=folder_path_constant(radius_name, t_max, deltaU)
     
-    #create the seed folder and all missing intermediate folders
-    create_folder(os.path.join(folder_path,str(rng_seed)))
+    #create the endpoints and tracks folders and all missing intermediate folders\\
+        #if they do not already exist
+    create_folder(os.path.join(folder_path,"tracks"))
+    create_folder(os.path.join(folder_path,"tracks_particle_count"))
+    
+    create_folder(os.path.join(folder_path,"endpoints"))
+    create_folder(os.path.join(folder_path,"endpoints_particle_count"))
     
     #save tracks, endpoints and particle_count to file
-    tracks_path=os.path.join(folder_path, str(rng_seed), "tracks.npy")
-    particle_count_path=os.path.join(folder_path, str(rng_seed), "particle_count.npy")
-    endpoints_path=os.path.join(folder_path, str(rng_seed), "endpoints.npy")
-    np.save(tracks_path, tracks)
-    np.save(particle_count_path, particle_count)
-    np.save(endpoints_path, endpoints)
+    tic=time()
+    if save_tracks:
+        tracks_path=os.path.join(folder_path, "tracks",f"{rng_seed}.npy")
+        particle_count_path=os.path.join(folder_path, "tracks_particle_count", f"{rng_seed}.npy")
+        np.save(tracks_path, tracks)
+        np.save(particle_count_path, particle_count)
 
+    endpoints_path=os.path.join(folder_path, "endpoints",f"{rng_seed}.npy")
+    particle_count_path=os.path.join(folder_path, "endpoints_particle_count",f"{rng_seed}.npy")
+    np.save(endpoints_path, endpoints)
+    np.save(particle_count_path, particle_count)
+    
+    toc=time()
+    print(f"Saving: particles={particle_count}, time={toc-tic}")
 
 #gets a list of seeds and their particle counts for \\
     #track data sets given r, N, deltaU, tau and potential type
-def get_available_seeds(parameters, flashing):
+def get_available_seeds(parameters, flashing, data_type):
     #get relevant parameters
     radius_name=parameters["radius_name"] 
     t_max=parameters["t_max"]
@@ -127,7 +141,7 @@ def get_available_seeds(parameters, flashing):
     
     #get seeds from folder names
     try:
-        seeds=os.listdir(folder_path)
+        seeds=os.listdir(os.path.join(folder_path,data_type))
     except:
         seeds=[]
     
@@ -135,7 +149,10 @@ def get_available_seeds(parameters, flashing):
     particle_counts=[]
     for seed in seeds:
         #set path to file
-        particle_count_path=os.path.join(folder_path,seed,"particle_count.npy")
+        if data_type=="tracks":
+            particle_count_path=os.path.join(folder_path, "tracks_particle_count", f"{seed}")
+        elif data_type=="endpoints":
+            particle_count_path=os.path.join(folder_path, "endpoints_particle_count",f"{seed}")
         #load particle count from file, as a 1x1 array
         particle_count=np.load(particle_count_path)
         #append particle count
@@ -157,32 +174,34 @@ def get_data(parameters, flashing, desired_particle_count, data_type):
     else:
         folder_path=folder_path_constant(radius_name, t_max, deltaU)
     
-    seeds, particle_counts=get_available_seeds(parameters, flashing)
+    seeds, particle_counts=get_available_seeds(parameters, flashing, data_type)
     
     if data_type=="tracks" or data_type=="endpoints":
         missing_particles=desired_particle_count
         for i,(seed, particle_count) in enumerate(zip(seeds, particle_counts)):
             desired_indices=min(particle_count,missing_particles)
             #set path to file
-            data_path=os.path.join(folder_path,seed,f"{data_type}.npy")
+            data_path=os.path.join(folder_path,data_type,f"{seed}")
             #load from file and return data from as many particles as desired
             if data_type=="tracks":
                 if i==0:
                     desired_data=np.load(data_path)[:,:desired_indices]
                 else:
-                    desired_data.append(np.load(data_path)[:,:desired_indices], axis=1)
+                    desired_data=np.append(desired_data,np.load(data_path)[:,:desired_indices], axis=1)
             elif data_type=="endpoints":
                 if i==0:
                     desired_data=np.load(data_path)[:desired_indices]
                 else:
-                    desired_data.append(np.load(data_path)[:desired_indices])
+                    desired_data=np.append(desired_data,np.load(data_path)[:desired_indices])
             missing_particles-=desired_indices
             #break when data from enough particles is aquired
             if not missing_particles:
                 break
+        if missing_particles:
+            raise Exception("Error: Not enough data")
     else:
-        raise("Error: Not valid datatype")
-        
+        raise Exception("Error: Not valid datatype")
+    
     return desired_data
 
 
