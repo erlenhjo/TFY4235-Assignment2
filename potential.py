@@ -75,12 +75,11 @@ def probability_density(U, alpha, deltaU, kbT):
     return a/(kbT*b)
     
 def ax_plot_probability_density(alpha, deltaU, kbT, ax):
-    p=lambda U : probability_density(U, alpha, deltaU, kbT)
-    
     U=np.linspace(0,deltaU,10000)
+    ax.plot(U/deltaU,probability_density(U,alpha,deltaU,kbT)*deltaU,label="Probability density")
     
-    ax.plot(U/deltaU,p(U)*deltaU,label="Probability density")
-        
+def validate_probability_density(alpha, deltaU, kbT):
+    p=lambda U : probability_density(U, alpha, deltaU, kbT)
     total_probability,_=integrate.quad(p,0,deltaU)
     print(f"The total probability at deltaU={deltaU/kbT}kbT differs from 1 by {abs(total_probability-1):.1e}")
     
