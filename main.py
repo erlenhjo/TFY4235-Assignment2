@@ -65,22 +65,30 @@ def build_statistics_in_potential(parameters, flashing, desired_particle_count, 
         missing_particles-=particle_count
 
 def run_experiment_constant(desired_particle_count):
-    global kBT, alpha, L
+    global kBT, alpha, L, eV
     
     radius_name="r_1"
-    deltaU_values=np.array([0.1,10])*kbT
+    deltaU_values=np.append(np.array([0.1,10])*kbT,80*eV)
     tau=1
-    t_max=100
+    
     flashing=False
+    
+    for deltaU in deltaU_values:
+        t_max=4
+        parameters=set_experiment_parameters(radius_name, deltaU, tau, t_max, alpha, L)
+        build_statistics_in_potential(parameters, flashing, desired_particle_count, save_tracks=True)
+        dataPresentation.plot_tracks_in_potential(parameters, flashing, desired_particle_count=20)
     
     parameters_list=[]
     for deltaU in deltaU_values:
+        t_max=100
         parameters=set_experiment_parameters(radius_name, deltaU, tau, t_max, alpha, L)
+        #print(parameters)
         parameters_list.append(parameters)
         build_statistics_in_potential(parameters, flashing, desired_particle_count, save_tracks=True)
-        dataPresentation.plot_tracks_in_potential(parameters, flashing, desired_particle_count=100)
-       
-    dataPresentation.compare_to_Boltzmann_constant(parameters_list, desired_particle_count)
+
+        
+    dataPresentation.compare_to_Boltzmann_constant(parameters_list[:2], desired_particle_count)
     
 
 def run_experiment_flashing(desired_particle_count):
@@ -91,35 +99,51 @@ def run_experiment_flashing(desired_particle_count):
     t_max=100
     flashing=True
     
-    taus=np.arange(1,30)/15
-    parameters_list=[]
+    taus=np.arange(1,31)/15
+    parameters_list_1=[]
+    parameters_list_2=[]
     for tau in taus:
         print(f"Radius=r_1, Tau={tau}")
         parameters=set_experiment_parameters(radius_name, deltaU, tau, t_max, alpha, L)
-        parameters_list.append(parameters)
+        #print(parameters)
+        parameters_list_1.append(parameters)
         build_statistics_in_potential(parameters, flashing, desired_particle_count, save_tracks=False)
     for tau in taus:
         print(f"Radius=r_2, Tau={tau}")
         parameters=set_experiment_parameters("r_2", deltaU, tau, t_max, alpha, L)
+        parameters_list_2.append(parameters)
         build_statistics_in_potential(parameters, flashing, desired_particle_count, save_tracks=False)
         
-    tau_opt=dataPresentation.plot_velocity_over_tau(parameters_list, flashing, desired_particle_count)
+    tau_opt=dataPresentation.plot_velocity_over_tau(parameters_list_1,parameters_list_2, flashing, desired_particle_count)
     
+    tau_opt=0.44791458124791456
+    t_max=10
     print(f"Radius=r_1, Tau={tau_opt}")
-    parameters=set_experiment_parameters(radius_name, deltaU, tau_opt, t_max, alpha, L)
-    build_statistics_in_potential(parameters, flashing, desired_particle_count=100, save_tracks=True)
+    parameters_1=set_experiment_parameters(radius_name, deltaU, tau_opt, t_max, alpha, L)
+    build_statistics_in_potential(parameters_1, flashing, desired_particle_count=200, save_tracks=True)
     print(f"Radius=r_2, Tau={tau_opt}")
-    parameters=set_experiment_parameters("r_2", deltaU, tau_opt, t_max, alpha, L)
-    build_statistics_in_potential(parameters, flashing, desired_particle_count=100, save_tracks=True)
+    parameters_2=set_experiment_parameters("r_2", deltaU, tau_opt, t_max, alpha, L)
+    build_statistics_in_potential(parameters_2, flashing, desired_particle_count=200, save_tracks=True)
         
+    dataPresentation.motion_ensemble(parameters_1,parameters_2,flashing,desired_particle_count=200)
         
+    
     plot_taus=[0.1,tau_opt,1]
     for tau in plot_taus:
-        t_max=5*tau
+        t_max=1
         parameters=set_experiment_parameters(radius_name, deltaU, tau, t_max, alpha, L)
         build_statistics_in_potential(parameters, flashing, desired_particle_count=100, save_tracks=True)
-        #dataPresentation.plot_tracks_in_potential(parameters, flashing, desired_particle_count=100)
-
+        dataPresentation.plot_tracks_in_potential(parameters, flashing, desired_particle_count=100)
+      
+    parameters_list=[]
+    for t_max in np.array([0.1,0.4479,1.0])*0.75:
+        tau=1000
+        parameters=set_experiment_parameters(radius_name, deltaU, tau, t_max, alpha, L)
+        parameters_list.append(parameters)
+        build_statistics_in_potential(parameters, flashing, desired_particle_count=100000, save_tracks=False)
+    
+    dataPresentation.plot_diffusion(parameters_list, flashing, desired_particle_count=100000)
+    
     
 
 
@@ -128,7 +152,6 @@ if __name__=="__main__":
     #run_experiment_constant(desired_particle_count=1000)
     run_experiment_flashing(desired_particle_count=10000)
     
-    #run_experiment_no_potential
     
 
 

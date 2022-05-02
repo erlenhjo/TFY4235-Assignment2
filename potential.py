@@ -76,7 +76,7 @@ def probability_density(U, alpha, deltaU, kbT):
     
 def ax_plot_probability_density(alpha, deltaU, kbT, ax):
     U=np.linspace(0,deltaU,10000)
-    ax.plot(U/deltaU,probability_density(U,alpha,deltaU,kbT)*deltaU,label="Probability density")
+    ax.plot(U/deltaU,probability_density(U,alpha,deltaU,kbT)*deltaU,label=f"Probability density {deltaU/kbT:.1f}kbT")
     
 def validate_probability_density(alpha, deltaU, kbT):
     p=lambda U : probability_density(U, alpha, deltaU, kbT)

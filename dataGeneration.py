@@ -210,13 +210,4 @@ def get_data(parameters, flashing, desired_particle_count, data_type):
 
 ########################################################
 
-###### Zero potential ######
-
-
-
-
-
-
-
-############################
     
